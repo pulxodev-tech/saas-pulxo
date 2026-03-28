@@ -10,6 +10,7 @@ export interface User {
   last_name?: string;
   email?: string;
   phone?: string;
+  pollster_code?: string;
   is_active: boolean;
   role: {
     id: number;

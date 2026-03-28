@@ -22,6 +22,7 @@ class User extends Authenticatable
         'phone',
         'password',
         'pin',
+        'pollster_code',
         'is_active',
         'last_login_at',
     ];

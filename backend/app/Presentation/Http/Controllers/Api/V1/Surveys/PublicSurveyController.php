@@ -11,7 +11,6 @@ use App\Infrastructure\Persistence\Eloquent\Models\User;
 use App\Infrastructure\Persistence\Eloquent\Models\GroupMember;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
 class PublicSurveyController extends Controller
@@ -22,34 +21,25 @@ class PublicSurveyController extends Controller
 
     /**
      * GET /api/v1/public/pollster-check?pin=XXXX
-     * Validates a pollster by their 4-digit PIN (hashed).
+     * Validates a pollster by their unique pollster_code (plain text, guaranteed unique).
      */
     public function checkPollster(Request $request): JsonResponse
     {
-        $pin = $request->query('pin', '');
+        $code = trim($request->query('pin', ''));
 
-        if (!preg_match('/^\d{4}$/', $pin)) {
+        if (!preg_match('/^\d{4}$/', $code)) {
             return response()->json([
-                'valid' => false,
+                'valid'   => false,
                 'message' => 'El código debe ser de 4 dígitos.',
             ], 422);
         }
 
-        // PINs are hashed — must iterate active pollsters (bounded set)
-        $candidates = User::where('is_active', true)
-            ->whereNotNull('pin')
+        $user = User::where('pollster_code', $code)
+            ->where('is_active', true)
             ->whereHas('role', function ($q) {
                 $q->whereIn('name', ['encuestador', 'super_admin', 'coordinator', 'supervisor']);
             })
-            ->get();
-
-        $user = null;
-        foreach ($candidates as $candidate) {
-            if (Hash::check($pin, $candidate->pin)) {
-                $user = $candidate;
-                break;
-            }
-        }
+            ->first();
 
         if (!$user) {
             return response()->json([

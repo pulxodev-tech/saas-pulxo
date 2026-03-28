@@ -66,13 +66,17 @@ const NO_GPS_WARN_LIMIT = 3;
 
           @if (pollsterName()) {
             <div class="flex items-center gap-2">
-              <div class="text-right mr-2 hidden xs:block">
+              <div class="text-right mr-1 hidden xs:block">
                 <p class="text-[10px] font-black text-slate-400 leading-none uppercase">Encuestador</p>
                 <p class="text-[10px] font-black text-blue-600 leading-none mt-0.5 truncate max-w-[80px]">{{ pollsterName() }}</p>
               </div>
               <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] font-black">
                 {{ pollsterName()!.charAt(0) }}
               </div>
+              <button (click)="clearPollsterSession()" title="Cambiar agente"
+                class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+              </button>
             </div>
           }
         </div>
@@ -88,32 +92,30 @@ const NO_GPS_WARN_LIMIT = 3;
           <div class="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-sm mx-auto pt-8">
             <div class="text-center mb-8">
               <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm border border-blue-100">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
               </div>
-              <h2 class="text-2xl font-black text-slate-900 leading-tight">Acceso Identificado</h2>
-              <p class="text-slate-500 text-sm mt-2 px-4">Ingresa tu número de celular registrado para identificarte como encuestador autorizado.</p>
+              <h2 class="text-2xl font-black text-slate-900 leading-tight">Ingresa tu PIN</h2>
+              <p class="text-slate-500 text-sm mt-2 px-4">Código de 4 dígitos asignado a tu usuario.</p>
             </div>
 
-            <form [formGroup]="identityForm" (ngSubmit)="submitIdentity()" class="space-y-4">
-              <div class="relative">
-                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest absolute -top-2 left-4 bg-slate-50 px-1 z-10">Tu Celular Registrado</label>
-                <input formControlName="phone" type="tel" inputmode="numeric"
-                  placeholder="300 000 0000" maxlength="10"
-                  (input)="onlyDigits($event)"
-                  class="w-full bg-white border-2 border-slate-200 rounded-2xl px-5 py-4 text-lg font-bold focus:border-blue-500 focus:outline-none transition-all" />
-              </div>
-
-              @if (error()) {
-                <div class="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl text-xs">{{ error() }}</div>
+            <div class="flex gap-3 justify-center mb-6">
+              @for (i of [0,1,2,3]; track i) {
+                <input [id]="'pin-' + i" type="password" inputmode="numeric" maxlength="1"
+                  class="w-16 h-16 text-center text-2xl font-black border-2 border-slate-200 rounded-2xl bg-white focus:border-blue-500 outline-none transition-colors"
+                  (input)="onPinInput($event, i)" (keydown.backspace)="onPinBackspace($event, i)" />
               }
+            </div>
 
-              <button type="submit" [disabled]="identityForm.invalid || busy()"
-                class="w-full bg-slate-950 text-white py-4 rounded-2xl text-sm font-black shadow-xl disabled:opacity-50 flex items-center justify-center gap-2 transition-all">
-                @if (busy()) { <span class="animate-spin text-xl">◌</span> }
-                Validar Identidad
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-              </button>
-            </form>
+            @if (error()) {
+              <div class="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl text-xs mb-4 text-center">{{ error() }}</div>
+            }
+
+            <button (click)="submitIdentity()" [disabled]="pinCode().length < 4 || busy()"
+              class="w-full bg-slate-950 text-white py-4 rounded-2xl text-sm font-black shadow-xl disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+              @if (busy()) { <span class="animate-spin text-xl">◌</span> }
+              Ingresar
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+            </button>
           </div>
         }
 
@@ -121,19 +123,32 @@ const NO_GPS_WARN_LIMIT = 3;
         @if (step() === 'phone') {
           <div class="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-sm mx-auto pt-8">
             <div class="text-center mb-8">
-              <h2 class="text-2xl font-black text-slate-900 leading-tight">Celular del Respondente</h2>
+              <h2 class="text-2xl font-black text-slate-900 leading-tight">Celular del Ciudadano</h2>
               <p class="text-slate-500 text-sm mt-2 px-4">Iniciando encuesta con {{ pollsterName()?.split(' ')[0] }}</p>
             </div>
             <form [formGroup]="phoneForm" (ngSubmit)="submitPhone()" class="space-y-4">
               <div class="relative">
-                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest absolute -top-2 left-4 bg-slate-50 px-1 z-10">Celular del Respondente</label>
+                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest absolute -top-2 left-4 bg-slate-50 px-1 z-10">Celular del Ciudadano</label>
                 <input formControlName="phone" type="tel" inputmode="numeric"
                   placeholder="300 000 0000" maxlength="10"
                   (input)="onlyDigits($event)"
-                  class="w-full bg-white border-2 border-slate-200 rounded-2xl px-5 py-4 text-lg font-bold focus:border-blue-500 focus:outline-none transition-all" />
+                  class="w-full bg-white border-2 rounded-2xl px-5 py-4 text-lg font-bold focus:outline-none transition-all"
+                  [class.border-slate-200]="!phoneForm.get('phone')?.touched || phoneForm.get('phone')?.valid"
+                  [class.focus:border-blue-500]="true"
+                  [class.border-red-300]="phoneForm.get('phone')?.touched && phoneForm.get('phone')?.invalid" />
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black"
+                  [class.text-green-500]="(phoneForm.get('phone')?.value?.length || 0) === 10"
+                  [class.text-slate-300]="(phoneForm.get('phone')?.value?.length || 0) !== 10">
+                  {{ phoneForm.get('phone')?.value?.length || 0 }}/10
+                </span>
               </div>
-              @if (error()) { <div class="text-red-600 text-xs px-2">{{ error() }}</div> }
-              <button type="submit" [disabled]="phoneForm.invalid || busy()" class="w-full bg-blue-600 text-white py-4 rounded-2xl text-sm font-black shadow-lg disabled:opacity-50">
+              @if (phoneForm.get('phone')?.touched && phoneForm.get('phone')?.invalid) {
+                <div class="bg-red-50 border border-red-100 text-red-600 p-3 rounded-xl text-xs text-center">
+                  Debe ser un número de celular de exactamente 10 dígitos.
+                </div>
+              }
+              @if (error()) { <div class="text-red-600 text-xs px-2 text-center">{{ error() }}</div> }
+              <button type="submit" [disabled]="phoneForm.invalid || busy()" class="w-full bg-blue-600 text-white py-4 rounded-2xl text-sm font-black shadow-lg disabled:opacity-50 transition-all">
                 @if (busy()) { <span class="animate-spin">◌</span> } Continuar
               </button>
             </form>
@@ -435,21 +450,37 @@ const NO_GPS_WARN_LIMIT = 3;
                           }
                         }
 
-                        <!-- Calle: Google Maps Autocomplete -->
+                        <!-- Calle: Google Maps manual autocomplete (debounced) -->
                         @if (addressSource() === 'calle') {
                           <div class="relative">
-                            <input [id]="'maps-autocomplete-' + field.field_key"
-                              [formControlName]="field.field_key"
+                            <input [formControlName]="field.field_key"
                               type="text"
-                              placeholder="Escribe la dirección..."
+                              placeholder="Escribe mínimo 5 caracteres..."
                               autocomplete="off"
-                              (input)="onAddressInput($event)"
+                              (input)="onAddressInput($event, field.field_key)"
+                              (blur)="closeAddressSuggestions()"
                               class="w-full border-b border-slate-200 py-2 outline-none font-bold text-slate-800 bg-transparent focus:border-blue-500 transition-colors" />
+                            @if (addressSearching()) {
+                              <span class="absolute right-0 top-2 text-[10px] text-slate-400 font-bold animate-pulse">Buscando...</span>
+                            }
+                            <!-- Suggestions dropdown -->
+                            @if (addressSuggestions().length > 0) {
+                              <div class="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                                @for (s of addressSuggestions(); track s.place_id) {
+                                  <button type="button"
+                                    (mousedown)="selectAddressSuggestion(s, field.field_key)"
+                                    class="w-full text-left px-4 py-3 text-xs font-bold text-slate-700 hover:bg-blue-50 border-b border-slate-50 last:border-0 transition-colors">
+                                    <span class="text-blue-600 font-black">{{ s.structured_formatting?.main_text }}</span>
+                                    <span class="text-slate-400 ml-1">{{ s.structured_formatting?.secondary_text }}</span>
+                                  </button>
+                                }
+                              </div>
+                            }
                           </div>
                           @if (addressCoords().lat !== 0) {
                             <p class="text-[10px] text-blue-600 font-bold mt-1">✓ Coordenadas: {{ addressCoords().lat.toFixed(5) }}, {{ addressCoords().lng.toFixed(5) }}</p>
                           } @else {
-                            <p class="text-[10px] text-slate-400 font-bold mt-1">Selecciona una dirección de la lista de sugerencias para obtener coordenadas.</p>
+                            <p class="text-[10px] text-slate-400 font-bold mt-1">Escribe la dirección y selecciona de la lista (mín. 5 caracteres, espera 600ms).</p>
                           }
                         }
 
@@ -564,11 +595,15 @@ export class PublicFlowComponent implements OnInit, OnDestroy {
   dailySurveyCount = signal(0);
 
   // ── Address / Location ────────────────────────────────────────────────
-  addressSource   = signal<'casa' | 'calle' | null>(null);
-  addressCoords   = signal<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
-  private mapsApiKey        = '';
-  private mapsAutocomplete?: any; // google.maps.places.Autocomplete
-  private addressFieldKey   = '';
+  addressSource       = signal<'casa' | 'calle' | null>(null);
+  addressCoords       = signal<{ lat: number; lng: number }>({ lat: 0, lng: 0 });
+  addressSuggestions  = signal<any[]>([]);
+  addressSearching    = signal(false);
+  private mapsApiKey          = '';
+  private addressDebounce?: ReturnType<typeof setTimeout>;
+  private autocompleteService?: any; // google.maps.places.AutocompleteService
+  private placesService?: any;       // google.maps.places.PlacesService
+  private addressFieldKey     = '';
 
   private formId           = 0;
   private countdownTimer?: ReturnType<typeof setInterval>;
@@ -599,12 +634,11 @@ export class PublicFlowComponent implements OnInit, OnDestroy {
     return !!val && val === this.normalizedPhone();
   }
 
+  pinCode = signal('');
+
   // ── Static forms ─────────────────────────────────────────────────────
-  identityForm = this.fb.group({
-    phone: ['', [Validators.required, Validators.minLength(7), Validators.maxLength(10)]]
-  });
   phoneForm = this.fb.group({
-    phone: ['', [Validators.required, Validators.minLength(7), Validators.maxLength(10)]]
+    phone: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(10), Validators.pattern(/^\d{10}$/)]]
   });
 
   // ── Lifecycle ────────────────────────────────────────────────────────
@@ -612,6 +646,40 @@ export class PublicFlowComponent implements OnInit, OnDestroy {
     this.formId = Number(this.route.snapshot.params['id']);
     this.loadForm(this.formId);
     this.loadMapsKey();
+    this.restorePollsterSession();
+  }
+
+  // ── Pollster session cache (10h) ──────────────────────────────────────
+  private pollsterCacheKey(): string {
+    return `pulxo_pollster_${this.formId}`;
+  }
+
+  private savePollsterSession(pollster: any): void {
+    localStorage.setItem(this.pollsterCacheKey(), JSON.stringify({ pollster, ts: Date.now() }));
+  }
+
+  private restorePollsterSession(): void {
+    const raw = localStorage.getItem(this.pollsterCacheKey());
+    if (!raw) return;
+    try {
+      const data = JSON.parse(raw);
+      if (Date.now() - data.ts < OTP_CACHE_TTL_MS && data.pollster) {
+        this.pollsterInfo.set(data.pollster);
+        this.loadNoGpsCount();
+        this.loadDailyCount();
+        this.step.set('phone');
+      } else {
+        localStorage.removeItem(this.pollsterCacheKey());
+      }
+    } catch {
+      localStorage.removeItem(this.pollsterCacheKey());
+    }
+  }
+
+  clearPollsterSession(): void {
+    localStorage.removeItem(this.pollsterCacheKey());
+    this.pollsterInfo.set(null);
+    this.step.set('identity');
   }
 
   ngOnDestroy(): void {
@@ -630,10 +698,12 @@ export class PublicFlowComponent implements OnInit, OnDestroy {
     this.addressSource.set(source);
     this.addressFieldKey = fieldKey;
     this.addressCoords.set({ lat: 0, lng: 0 });
+    this.addressSuggestions.set([]);
 
     if (source === 'calle' && this.mapsApiKey) {
-      // Load Maps JS API lazily if not already loaded
-      setTimeout(() => this.initMapsAutocomplete(fieldKey), 100);
+      this.loadMapsScript().then(() => this.initServices()).catch(() => {
+        this.msgSvc.add({ severity: 'warn', summary: 'Maps', detail: 'No se pudo cargar Google Maps.' });
+      });
     } else if (source === 'calle' && !this.mapsApiKey) {
       this.msgSvc.add({ severity: 'warn', summary: 'Maps', detail: 'Google Maps no configurado. Escribe la dirección manualmente.' });
     }
@@ -643,48 +713,90 @@ export class PublicFlowComponent implements OnInit, OnDestroy {
     return new Promise((resolve, reject) => {
       if ((window as any).google?.maps) { resolve(); return; }
       const existing = document.getElementById('gmaps-script');
-      if (existing) {
-        existing.addEventListener('load', () => resolve());
-        return;
-      }
+      if (existing) { existing.addEventListener('load', () => resolve()); return; }
       const s = document.createElement('script');
-      s.id  = 'gmaps-script';
-      s.src = `https://maps.googleapis.com/maps/api/js?key=${this.mapsApiKey}&libraries=places`;
-      s.async = true;
+      s.id      = 'gmaps-script';
+      s.src     = `https://maps.googleapis.com/maps/api/js?key=${this.mapsApiKey}&libraries=places`;
+      s.async   = true;
       s.onload  = () => resolve();
       s.onerror = () => reject();
       document.head.appendChild(s);
     });
   }
 
-  private initMapsAutocomplete(fieldKey: string): void {
-    if (!this.mapsApiKey) return;
-    this.loadMapsScript().then(() => {
-      const input = document.getElementById(`maps-autocomplete-${fieldKey}`) as HTMLInputElement;
-      if (!input || !(window as any).google?.maps?.places) return;
-
-      const gMaps = (window as any).google.maps;
-      this.mapsAutocomplete = new gMaps.places.Autocomplete(input, {
-        types: ['address'],
-        componentRestrictions: { country: 'co' },
-      });
-      this.mapsAutocomplete.addListener('place_changed', () => {
-        const place = this.mapsAutocomplete.getPlace();
-        if (place?.geometry?.location) {
-          const lat = place.geometry.location.lat();
-          const lng = place.geometry.location.lng();
-          this.addressCoords.set({ lat, lng });
-          this.dynamicForm()?.get(fieldKey)?.setValue(place.formatted_address ?? input.value);
-        }
-      });
-    }).catch(() => {
-      this.msgSvc.add({ severity: 'warn', summary: 'Maps', detail: 'No se pudo cargar Google Maps.' });
-    });
+  private initServices(): void {
+    const gMaps = (window as any).google?.maps;
+    if (!gMaps?.places) return;
+    if (!this.autocompleteService) {
+      this.autocompleteService = new gMaps.places.AutocompleteService();
+    }
+    if (!this.placesService) {
+      // PlacesService needs a DOM node or map
+      const el = document.createElement('div');
+      this.placesService = new gMaps.places.PlacesService(el);
+    }
   }
 
-  onAddressInput(event: Event): void {
-    const val = (event.target as HTMLInputElement).value;
-    if (!val) this.addressCoords.set({ lat: 0, lng: 0 });
+  /** Debounced: fires Places predictions only after 600ms pause AND min 5 chars */
+  onAddressInput(event: Event, _fieldKey: string): void {
+    const val = (event.target as HTMLInputElement).value.trim();
+
+    if (!val) {
+      this.addressCoords.set({ lat: 0, lng: 0 });
+      this.addressSuggestions.set([]);
+      return;
+    }
+
+    // Clear coordinate when user edits the text
+    this.addressCoords.set({ lat: 0, lng: 0 });
+
+    // Don't fire API until min 5 characters
+    if (val.length < 5 || !this.autocompleteService) {
+      this.addressSuggestions.set([]);
+      return;
+    }
+
+    // Cancel previous pending call
+    if (this.addressDebounce) clearTimeout(this.addressDebounce);
+
+    this.addressSearching.set(true);
+    this.addressDebounce = setTimeout(() => {
+      this.autocompleteService.getPlacePredictions(
+        { input: val, types: ['address'], componentRestrictions: { country: 'co' } },
+        (predictions: any[], status: string) => {
+          this.addressSearching.set(false);
+          if (status === 'OK' && predictions?.length) {
+            this.addressSuggestions.set(predictions.slice(0, 5));
+          } else {
+            this.addressSuggestions.set([]);
+          }
+        }
+      );
+    }, 600);
+  }
+
+  selectAddressSuggestion(suggestion: any, fieldKey: string): void {
+    this.addressSuggestions.set([]);
+    this.dynamicForm()?.get(fieldKey)?.setValue(suggestion.description);
+
+    if (!this.placesService) return;
+
+    this.placesService.getDetails(
+      { placeId: suggestion.place_id, fields: ['geometry'] },
+      (place: any, status: string) => {
+        if (status === 'OK' && place?.geometry?.location) {
+          this.addressCoords.set({
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+          });
+        }
+      }
+    );
+  }
+
+  closeAddressSuggestions(): void {
+    // Small delay so mousedown on suggestions fires first
+    setTimeout(() => this.addressSuggestions.set([]), 150);
   }
 
   loadForm(id: number): void {
@@ -859,25 +971,63 @@ export class PublicFlowComponent implements OnInit, OnDestroy {
     input.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
-  // ── Step: identity ───────────────────────────────────────────────────
+  // ── Step: identity (PIN) ─────────────────────────────────────────────
+  onPinInput(ev: Event, idx: number): void {
+    const input = ev.target as HTMLInputElement;
+    input.value = input.value.replace(/\D/g, '').slice(0, 1);
+    if (input.value && idx < 3) {
+      (document.getElementById(`pin-${idx + 1}`) as HTMLInputElement)?.focus();
+    }
+    this.collectPinCode();
+    if (this.pinCode().length === 4) this.submitIdentity();
+  }
+
+  onPinBackspace(ev: Event, idx: number): void {
+    const input = ev.target as HTMLInputElement;
+    if (!input.value && idx > 0) {
+      (document.getElementById(`pin-${idx - 1}`) as HTMLInputElement)?.focus();
+    }
+    setTimeout(() => this.collectPinCode(), 0);
+  }
+
+  private collectPinCode(): void {
+    const digits = Array.from({ length: 4 }, (_, i) =>
+      ((document.getElementById(`pin-${i}`) as HTMLInputElement)?.value ?? '')
+    );
+    this.pinCode.set(digits.join(''));
+  }
+
+  private clearPinBoxes(): void {
+    for (let i = 0; i < 4; i++) {
+      const el = document.getElementById(`pin-${i}`) as HTMLInputElement;
+      if (el) el.value = '';
+    }
+    this.pinCode.set('');
+  }
+
   submitIdentity(): void {
+    if (this.pinCode().length < 4 || this.busy()) return;
     this.error.set(null);
     this.busy.set(true);
-    this.svc.checkPollster(this.identityForm.value.phone!).subscribe({
+    this.svc.checkPollster(this.pinCode()).subscribe({
       next: res => {
         if (!res.pollster?.group_id) {
           this.error.set('No tienes un grupo asignado. Contacta al administrador.');
+          this.clearPinBoxes();
           this.busy.set(false);
           return;
         }
         this.pollsterInfo.set(res.pollster);
+        this.savePollsterSession(res.pollster);
         this.loadNoGpsCount();
         this.loadDailyCount();
         this.step.set('phone');
         this.busy.set(false);
       },
       error: err => {
-        this.error.set(err.error?.message || 'Identidad no válida o usuario inactivo.');
+        this.error.set(err.error?.message || 'Código no válido o usuario inactivo.');
+        this.clearPinBoxes();
+        setTimeout(() => (document.getElementById('pin-0') as HTMLInputElement)?.focus(), 50);
         this.busy.set(false);
       }
     });
@@ -1145,14 +1295,34 @@ export class PublicFlowComponent implements OnInit, OnDestroy {
   }
 
   reset(): void {
-    this.step.set('identity');
     this.phoneForm.reset();
-    this.identityForm.reset();
+    this.clearPinBoxes();
     this.otpCode.set('');
     this.gpsStatus.set('idle');
     this.gpsError.set(null);
-    this.pollsterInfo.set(null);
+    this.error.set(null);
     this.testOtp.set(null);
+    this.addressSource.set(null);
+    this.addressCoords.set({ lat: 0, lng: 0 });
+    this.addressSuggestions.set([]);
     this.checkboxSets.clear();
     this.clearCountdown();
     this.buildDynamicForm(this.activeForm()?.fields ?? []);
+
+    // Restore pollster session if still valid → skip PIN step
+    const raw = localStorage.getItem(this.pollsterCacheKey());
+    if (raw) {
+      try {
+        const data = JSON.parse(raw);
+        if (Date.now() - data.ts < OTP_CACHE_TTL_MS && data.pollster) {
+          this.pollsterInfo.set(data.pollster);
+          this.step.set('phone');
+          return;
+        }
+      } catch { /* ignore */ }
+      localStorage.removeItem(this.pollsterCacheKey());
+    }
+    this.pollsterInfo.set(null);
+    this.step.set('identity');
+  }
+}

@@ -60,6 +60,9 @@ class CreateUserUseCase
             'is_active' => $dto->isActive,
         ]);
 
+        // Auto-generate unique pollster code from user ID (e.g. ID 5 → "0005")
+        $user->update(['pollster_code' => str_pad($user->id, 4, '0', STR_PAD_LEFT)]);
+
         return $user->load('role');
     }
 }

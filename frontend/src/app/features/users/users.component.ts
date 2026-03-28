@@ -149,6 +149,15 @@ import { ToastModule } from 'primeng/toast';
                 </div>
 
                 @if (selectedRole()?.name?.toLowerCase()?.trim() === 'encuestador') {
+                  @if (editingUserId()) {
+                    <div class="flex items-center gap-3 px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-2xl">
+                      <svg class="w-4 h-4 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                      <div>
+                        <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Código de acceso a encuestas</p>
+                        <p class="text-lg font-black text-indigo-700 tracking-widest">{{ editingUserCode() || '—' }}</p>
+                      </div>
+                    </div>
+                  }
                   <div class="space-y-1.5">
                     <div class="flex items-center justify-between ml-1">
                       <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest">{{ editingUserId() ? 'Nuevo PIN (Opcional)' : 'PIN de Acceso (4 dígitos)' }}</label>
@@ -201,6 +210,7 @@ import { ToastModule } from 'primeng/toast';
             <thead>
               <tr class="bg-slate-50/50">
                 <th class="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Información Usuario</th>
+                <th class="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Código</th>
                 <th class="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Rol</th>
                 <th class="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Estado</th>
                 <th class="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Acciones</th>
@@ -221,6 +231,15 @@ import { ToastModule } from 'primeng/toast';
                         </div>
                       </div>
                     </div>
+                  </td>
+                  <td class="px-8 py-5 text-center">
+                    @if (user.pollster_code) {
+                      <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-700 text-sm font-black tracking-widest select-all cursor-pointer" title="Código de acceso a encuestas">
+                        {{ user.pollster_code }}
+                      </span>
+                    } @else {
+                      <span class="text-slate-300 text-xs font-bold">—</span>
+                    }
                   </td>
                   <td class="px-8 py-5">
                     <div class="flex justify-center">
@@ -315,7 +334,8 @@ export class UsersComponent implements OnInit {
   loading = signal(false);
   saving = signal(false);
   showModal = signal(false);
-  editingUserId = signal<number | null>(null);
+  editingUserId   = signal<number | null>(null);
+  editingUserCode = signal<string | null>(null);
   showPassword = signal(false);
   showPin = signal(false);
 
@@ -388,6 +408,7 @@ export class UsersComponent implements OnInit {
 
   editUser(user: User): void {
     this.editingUserId.set(user.id);
+    this.editingUserCode.set(user.pollster_code ?? null);
     this.userForm.set({
       name: user.name,
       last_name: user.last_name || '',
@@ -403,6 +424,8 @@ export class UsersComponent implements OnInit {
 
   closeModal(): void {
     this.showModal.set(false);
+    this.editingUserId.set(null);
+    this.editingUserCode.set(null);
   }
 
   onRoleChange(): void {
