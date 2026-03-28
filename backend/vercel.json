@@ -19,7 +19,7 @@
   ],
   "env": {
     "APP_ENV": "production",
-    "APP_DEBUG": "false",
+    "APP_DEBUG": "true",
     "FILESYSTEM_DISK": "local",
     "QUEUE_CONNECTION": "sync",
     "LOG_CHANNEL": "errorlog"
