@@ -12,6 +12,10 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        if (isset($_SERVER['VERCEL']) || env('VERCEL')) {
+            $this->app->useStoragePath('/tmp');
+        }
+
         // Domain → Infrastructure bindings
         $this->app->bind(
             PermissionRepositoryInterface::class,
@@ -26,6 +30,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        //
+        if (isset($_SERVER['VERCEL']) || env('VERCEL')) {
+            config(['view.compiled' => '/tmp']);
+        }
     }
 }

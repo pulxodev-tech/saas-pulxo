@@ -1,6 +1,6 @@
 export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:8000/api/v1',
+  production: true,
+  apiUrl: 'https://pulxo-api.vercel.app/api/v1',
   googleMapsApiKey: 'REPLACE_WITH_YOUR_KEY',
   appName: 'Pulxo',
   supabaseUrl: 'https://jnjbaxroyhsngcjmdjjn.supabase.co',

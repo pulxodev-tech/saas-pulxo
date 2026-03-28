@@ -42,4 +42,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json(['message' => 'Recurso no encontrado.'], 404);
             }
         });
-    })->create();
+    })
+    ->registered(function ($app) {
+        if (isset($_SERVER['VERCEL']) || env('VERCEL')) {
+            $app->useStoragePath('/tmp');
+        }
+    })
+    ->create();
