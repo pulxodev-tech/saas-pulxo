@@ -31,8 +31,12 @@ try {
     header('Content-Type: application/json');
     echo json_encode([
         'error'   => $e->getMessage(),
+        'class'   => get_class($e),
         'file'    => str_replace(dirname(__DIR__), '', $e->getFile()),
         'line'    => $e->getLine(),
-        'class'   => get_class($e),
+        'trace'   => array_map(
+            fn($t) => ($t['file'] ?? '?') . ':' . ($t['line'] ?? '?'),
+            array_slice($e->getTrace(), 0, 8)
+        ),
     ]);
 }
