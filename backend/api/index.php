@@ -23,20 +23,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+// ── Fix Vercel SCRIPT_NAME stripping ─────────────────────────────────────────
+// Vercel sets SCRIPT_NAME=/api/index.php, causing Symfony to strip the /api/
+// prefix from REQUEST_URI before passing it to Laravel's router.
+// Setting SCRIPT_NAME to /index.php prevents this so the full path is preserved.
+$_SERVER['SCRIPT_NAME']     = '/index.php';
+$_SERVER['SCRIPT_FILENAME'] = __DIR__ . '/../public/index.php';
+$_SERVER['PHP_SELF']        = '/index.php';
+
 // Forward all other requests to the Laravel index.php
-try {
-    require __DIR__ . '/../public/index.php';
-} catch (\Throwable $e) {
-    http_response_code(500);
-    header('Content-Type: application/json');
-    echo json_encode([
-        'error'   => $e->getMessage(),
-        'class'   => get_class($e),
-        'file'    => str_replace(dirname(__DIR__), '', $e->getFile()),
-        'line'    => $e->getLine(),
-        'trace'   => array_map(
-            fn($t) => ($t['file'] ?? '?') . ':' . ($t['line'] ?? '?'),
-            array_slice($e->getTrace(), 0, 8)
-        ),
-    ]);
-}
+require __DIR__ . '/../public/index.php';
