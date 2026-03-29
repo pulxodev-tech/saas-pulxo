@@ -24,4 +24,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Forward all other requests to the Laravel index.php
-require __DIR__ . '/../public/index.php';
+try {
+    require __DIR__ . '/../public/index.php';
+} catch (\Throwable $e) {
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'error'   => $e->getMessage(),
+        'file'    => str_replace(dirname(__DIR__), '', $e->getFile()),
+        'line'    => $e->getLine(),
+        'class'   => get_class($e),
+    ]);
+}
